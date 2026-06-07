@@ -6,7 +6,7 @@ import org.bukkit.entity.Player;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Predicate;
+import java.util.UUID;
 
 /**
  * A utility class to manage player profiles of any type.
@@ -21,7 +21,7 @@ public final class ProfileManager<T extends MenuProfile>{
 	 */
 	@Getter
 	private final T defaultMenu;
-	private final Map<Player, T> utilityMap = new HashMap<>();
+	private final Map<UUID, T> utilityMap = new HashMap<>();
 	
 	/**
 	 * Creates a new ProfileManagerm add the default menu that should be asigned when a player has no menu and gets the menu called for them
@@ -40,9 +40,32 @@ public final class ProfileManager<T extends MenuProfile>{
 	 */
 	@SuppressWarnings("unchecked")
 	public T get(Player player) {
+		UUID uniqueId = player.getUniqueId();
+		if(utilityMap.containsKey(uniqueId)){
+			return utilityMap.get(uniqueId);
+		}
 		T profile = (T) defaultMenu.clone();
 		profile.setOwner(player);
-		utilityMap.keySet().removeIf(Predicate.not(Player::isValid));
-		return utilityMap.computeIfAbsent(player, k -> profile);
+		utilityMap.put(uniqueId, profile);
+		return profile;
 	}
+	
+	/**
+	 * Removes an entry from the manager
+	 *
+	 * @param uuid the player to remove it from
+	 */
+	public void remove(UUID uuid) {
+		utilityMap.remove(uuid);
+	}
+	
+	/**
+	 * Adds a profile into the manager or overrides the existing one
+	 *
+	 * @param profile the profile to add
+	 */
+	public void add(T profile) {
+		utilityMap.put(profile.getOwner().getUniqueId(), profile);
+	}
+	
 }
