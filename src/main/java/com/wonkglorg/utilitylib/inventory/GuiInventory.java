@@ -489,12 +489,12 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	public void open() {
 		profile.getOwner().closeInventory();
 		try{
-			GuiManager instance = GuiManager.instance();
+			GuiManager instance = GuiManager.getInstance(plugin);
+			instance.addMenu(getPlayer().getUniqueId(), this);
 		} catch(Exception e){
 			throw new IllegalStateException("Unable to open menu gui manager is not initialized!", e);
 		}
 		addComponents();
-		GuiManager.addMenu(getPlayer().getUniqueId(), this);
 		profile.getOwner().openInventory(inventory);
 	}
 	
@@ -546,9 +546,10 @@ public abstract class GuiInventory<T extends MenuProfile>{
 		inventory.clear();
 		buttons.clear();
 		if(removeFromManager){
-			GuiManager.cleanup(getPlayer().getUniqueId());
+			GuiManager.getInstance(plugin).cleanup(getPlayer().getUniqueId());
 		}
 	}
+	
 	/**
 	 * Remove this inventory as a listener and clean everything up to prevent memory leaks. Call this when the GUI is no longer being used.
 	 *
