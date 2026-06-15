@@ -1,4 +1,4 @@
-package com.wonkglorg.utilitylib.inventory;
+package com.wonkglorg.wonkylib.inventory;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;

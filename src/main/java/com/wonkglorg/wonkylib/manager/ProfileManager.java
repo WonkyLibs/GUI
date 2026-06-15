@@ -1,6 +1,6 @@
-package com.wonkglorg.utilitylib.manager;
+package com.wonkglorg.wonkylib.manager;
 
-import com.wonkglorg.utilitylib.inventory.profile.MenuProfile;
+import com.wonkglorg.wonkylib.inventory.profile.MenuProfile;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 

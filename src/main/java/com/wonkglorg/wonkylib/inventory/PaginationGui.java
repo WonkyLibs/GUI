@@ -1,6 +1,6 @@
-package com.wonkglorg.utilitylib.inventory;
+package com.wonkglorg.wonkylib.inventory;
 
-import static com.wonkglorg.utilitylib.inventory.GuiInventory.MAX_ROWS;
+import static com.wonkglorg.wonkylib.inventory.GuiInventory.MAX_ROWS;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.event.inventory.InventoryClickEvent;
