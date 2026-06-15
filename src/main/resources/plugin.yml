@@ -1,0 +1,8 @@
+main: com.wonkglorg.minecraft.gui.Main
+# noinspection YAMLSchemaValidation
+name: ${name}
+description: ${description}
+author: ${author}
+version: ${version}
+api-version: ${api_version}
+folia-supported: true
