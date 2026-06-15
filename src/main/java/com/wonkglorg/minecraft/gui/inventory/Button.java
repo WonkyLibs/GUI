@@ -1,4 +1,4 @@
-package com.wonkglorg.wonkylib.inventory;
+package com.wonkglorg.minecraft.gui.inventory;
 
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.inventory.InventoryClickEvent;

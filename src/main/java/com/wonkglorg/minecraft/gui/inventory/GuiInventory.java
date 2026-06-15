@@ -1,7 +1,7 @@
-package com.wonkglorg.wonkylib.inventory;
+package com.wonkglorg.minecraft.gui.inventory;
 
-import com.wonkglorg.wonkylib.inventory.profile.MenuProfile;
-import com.wonkglorg.wonkylib.manager.GuiManager;
+import com.wonkglorg.minecraft.gui.inventory.profile.MenuProfile;
+import com.wonkglorg.minecraft.gui.manager.GuiManager;
 import lombok.Getter;
 import lombok.Setter;
 import net.kyori.adventure.text.Component;

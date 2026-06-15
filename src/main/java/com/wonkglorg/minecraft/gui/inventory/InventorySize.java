@@ -1,4 +1,4 @@
-package com.wonkglorg.wonkylib.inventory;
+package com.wonkglorg.minecraft.gui.inventory;
 
 import lombok.Getter;
 

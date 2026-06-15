@@ -1,6 +1,6 @@
-package com.wonkglorg.wonkylib.manager;
+package com.wonkglorg.minecraft.gui.manager;
 
-import com.wonkglorg.wonkylib.inventory.profile.MenuProfile;
+import com.wonkglorg.minecraft.gui.inventory.profile.MenuProfile;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 

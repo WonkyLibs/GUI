@@ -1,6 +1,6 @@
-package com.wonkglorg.wonkylib.manager;
+package com.wonkglorg.minecraft.gui.manager;
 
-import com.wonkglorg.wonkylib.inventory.GuiInventory;
+import com.wonkglorg.minecraft.gui.inventory.GuiInventory;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
