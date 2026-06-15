@@ -227,7 +227,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void addItem(ItemStack item, int slot) {
 		inventory.setItem(slot, item);
-		buttons.put(slot, null);
+		buttons.remove(slot);
 	}
 	
 	/**
@@ -396,6 +396,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void update() {
 		for(Button button : buttons.values()){
+			if(button == null){
+				continue;
+			}
 			inventory.setItem(button.getSlot(), button.getItem());
 		}
 	}
