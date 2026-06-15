@@ -7,6 +7,7 @@ import org.bukkit.entity.Player;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 
 /**
  * A utility class to manage player profiles of any type.
@@ -20,7 +21,7 @@ public final class ProfileManager<T extends MenuProfile>{
 	 * Inherit all values passed with the class besides the owner being reasigned to the new player.
 	 */
 	@Getter
-	private final T defaultMenu;
+	private final Function<Player, T> profileProvider;
 	private final Map<UUID, T> utilityMap = new HashMap<>();
 	
 	/**
@@ -28,8 +29,8 @@ public final class ProfileManager<T extends MenuProfile>{
 	 *
 	 * @param defaultMenu
 	 */
-	public ProfileManager(T defaultMenu) {
-		this.defaultMenu = defaultMenu;
+	public ProfileManager(Function<Player, T> profileProvider) {
+		this.profileProvider = profileProvider;
 	}
 	
 	/**
@@ -38,14 +39,12 @@ public final class ProfileManager<T extends MenuProfile>{
 	 * @param player the player to get the profile for
 	 * @return the MenuProfile for the player
 	 */
-	@SuppressWarnings("unchecked")
 	public T get(Player player) {
 		UUID uniqueId = player.getUniqueId();
 		if(utilityMap.containsKey(uniqueId)){
 			return utilityMap.get(uniqueId);
 		}
-		T profile = (T) defaultMenu.clone();
-		profile.setOwner(player);
+		T profile = profileProvider.apply(player);
 		utilityMap.put(uniqueId, profile);
 		return profile;
 	}
