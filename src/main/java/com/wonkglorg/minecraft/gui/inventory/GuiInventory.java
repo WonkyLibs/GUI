@@ -125,7 +125,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	@Getter
 	@Setter
-	private boolean returnItemsInOpenSlots = true;
+	private boolean returnItemsInOpenSlots = false;
 	
 	/**
 	 * Whether or not the GUI has been destroyed (this menu should not be used anymore if it was marked as destroyed)
@@ -527,6 +527,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 		
 		if(returnItemsInOpenSlots){
 			for(int slot = 0; slot < inventory.getSize(); slot++){
+				if(!openSlots[slot]){
+					continue;
+				}
 				ItemStack item = inventory.getItem(slot);
 				if(item != null){
 					lastViewer.getInventory().addItem(item).values().forEach(remainingItem -> lastViewer.getWorld()
