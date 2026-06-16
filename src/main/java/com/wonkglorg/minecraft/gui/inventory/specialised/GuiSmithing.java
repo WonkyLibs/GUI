@@ -57,7 +57,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param button the button to add
      */
     public void addTemplateButton(Button button) {
-        addButton(button, getTemplateSlot());
+        add(button, getTemplateSlot());
     }
 
     /**
@@ -66,7 +66,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param item the item to add
      */
     public void addTemplateItem(ItemStack item) {
-        addItem(item, getTemplateSlot());
+        add(item, getTemplateSlot());
     }
 
     /**
@@ -75,7 +75,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param button the button to add
      */
     public void addBaseButton(Button button) {
-        addButton(button, getBaseSlot());
+        add(button, getBaseSlot());
     }
 
     /**
@@ -84,7 +84,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param item the item to add
      */
     public void addBaseItem(ItemStack item) {
-        addItem(item, getBaseSlot());
+        add(item, getBaseSlot());
     }
 
     /**
@@ -93,7 +93,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param button the button to add
      */
     public void addMaterialButton(Button button) {
-        addButton(button, getMaterialSlot());
+        add(button, getMaterialSlot());
     }
 
     /**
@@ -102,7 +102,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param item the item to add
      */
     public void addMaterialItem(ItemStack item) {
-        addItem(item, getMaterialSlot());
+        add(item, getMaterialSlot());
     }
 
     /**
@@ -111,7 +111,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param button the button to add
      */
     public void addResultButton(Button button) {
-        addButton(button, getResultSlot());
+        add(button, getResultSlot());
     }
 
     /**
@@ -120,7 +120,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param item the item to add
      */
     public void addResultItem(ItemStack item) {
-        addItem(item, getResultSlot());
+        add(item, getResultSlot());
     }
 
     /**
@@ -128,7 +128,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param item the item to add
      */
     public void addOutputItem(ItemStack item) {
-        addItem(item, getResultSlot());
+        add(item, getResultSlot());
     }
 
     /**
@@ -136,7 +136,7 @@ public abstract class GuiSmithing<T extends MenuProfile> extends GuiInventory<T>
      * @param button the button to add
      */
     public void addOutputButton(Button button) {
-        addButton(button, getResultSlot());
+        add(button, getResultSlot());
     }
 
 }

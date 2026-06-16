@@ -36,7 +36,7 @@ public abstract class GuiAnvil<T extends MenuProfile> extends GuiInventory<T>{
 	 * @param button the button to add
 	 */
 	public void addOutput(Button button) {
-		addButton(button, getOutputSlot());
+		add(button, getOutputSlot());
 	}
 	
 	/**
@@ -45,7 +45,7 @@ public abstract class GuiAnvil<T extends MenuProfile> extends GuiInventory<T>{
 	 * @param item the item to add
 	 */
 	public void addPrimary(ItemStack item) {
-		addItem(item, getPrimarySlot());
+		add(item, getPrimarySlot());
 	}
 	
 	/**
@@ -54,7 +54,7 @@ public abstract class GuiAnvil<T extends MenuProfile> extends GuiInventory<T>{
 	 * @param button the button to add
 	 */
 	public void addPrimary(Button button) {
-		addButton(button, getPrimarySlot());
+		add(button, getPrimarySlot());
 	}
 	
 	/**
@@ -63,7 +63,7 @@ public abstract class GuiAnvil<T extends MenuProfile> extends GuiInventory<T>{
 	 * @param item the item to add
 	 */
 	public void addSecondary(ItemStack item) {
-		addItem(item, getSecondarySlot());
+		add(item, getSecondarySlot());
 	}
 	
 	/**
@@ -72,7 +72,7 @@ public abstract class GuiAnvil<T extends MenuProfile> extends GuiInventory<T>{
 	 * @param button the button to add
 	 */
 	public void addSecondary(Button button) {
-		addButton(button, getSecondarySlot());
+		add(button, getSecondarySlot());
 	}
 	
 	/**

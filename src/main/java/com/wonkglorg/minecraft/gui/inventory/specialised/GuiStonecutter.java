@@ -35,7 +35,7 @@ public abstract class GuiStonecutter<T extends MenuProfile> extends GuiInventory
 	 * @param button the button to add
 	 */
 	public void addOutputButton(Button button) {
-		addButton(getOutputSlot(), button);
+		add(getOutputSlot(), button);
 	}
 	
 	/**
@@ -44,7 +44,7 @@ public abstract class GuiStonecutter<T extends MenuProfile> extends GuiInventory
 	 * @param itemStack the item to add
 	 */
 	public void addOutputItem(ItemStack itemStack) {
-		addItem(getOutputSlot(), itemStack);
+		add(getOutputSlot(), itemStack);
 	}
 	
 	/**
@@ -53,7 +53,7 @@ public abstract class GuiStonecutter<T extends MenuProfile> extends GuiInventory
 	 * @param button the button to add
 	 */
 	public void addInputButton(Button button) {
-		addButton(getInputSlot(), button);
+		add(getInputSlot(), button);
 	}
 	
 	/**
@@ -62,7 +62,7 @@ public abstract class GuiStonecutter<T extends MenuProfile> extends GuiInventory
 	 * @param itemStack the item to add
 	 */
 	public void addInputItem(ItemStack itemStack) {
-		addItem(getInputSlot(), itemStack);
+		add(getInputSlot(), itemStack);
 	}
 	
 }

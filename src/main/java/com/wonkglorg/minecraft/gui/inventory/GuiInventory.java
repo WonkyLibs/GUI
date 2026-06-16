@@ -16,14 +16,13 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.ApiStatus.Internal;
 
-import java.lang.ref.Cleaner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -37,17 +36,7 @@ import java.util.function.Consumer;
  */
 @SuppressWarnings({"unused", "unchecked"})
 public abstract class GuiInventory<T extends MenuProfile>{
-	
-	private static final Cleaner cleaner = Cleaner.create();
-	
-	private record CleanupTask(GuiInventory<?> gui) implements Runnable{
-		
-		@Override
-		public void run() {
-			gui.destroy();
-		}
-	}
-	
+	public static final ItemStack EMPTY_SLOT_ITEM = new ItemStack(Material.AIR);
 	/**
 	 * The plugin owning this GUI
 	 */
@@ -60,9 +49,15 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	@Getter
 	private final Inventory inventory;
 	/**
-	 * The slots that are open for items to be placed in and moved out of (0-indexed) this gets ignored by the pagination gui if used in the same inventory region, (this does not include {@link #returnItems} this will always return items in open slots even if they include pagination slots)
+	 * Each entry in this array is directly related to the slot id in the inventory, if set to true items can be freely moved in and out of the slot
 	 */
-	protected final Set<Integer> openSlots = new LinkedHashSet<>();
+	private final boolean[] openSlots;
+	
+	/**
+	 * flag if any open slots exist
+	 */
+	private boolean hasOpenSlots = false;
+	
 	/**
 	 * Runs when the GUI is destroyed (should be used to clean up any resources)
 	 */
@@ -70,7 +65,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	private Runnable onDestroy;
 	
 	/**
-	 * Runs when an inventory click is made (before any other click action or button action) can be used to debug or do something specific no matter what is being clicked this does not adhere to {@link #disabledClickEvents} and simply gets called for every event inside the menu
+	 * Runs when an inventory click is made (before any other click action or button action) can be used to debug or do something specific no matter what is being clicked this does not adhere to {@link #disabledClickTypes} and simply gets called for every event inside the menu
 	 */
 	@Setter
 	private Consumer<InventoryClickEvent> onClick = e -> {
@@ -97,13 +92,16 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	/**
 	 * The buttons in the GUI (0-indexed)
 	 */
-	private final Map<Integer, Button> buttons = new HashMap<>();
+	@Getter
+	private final Button[] buttons;
 	/**
 	 * Handles all possible clicks in the GUI.
 	 */
 	private final List<ClickActionData> clickHandlers = new ArrayList<>();
-	
-	private final Set<ClickType> disabledClickEvents = new HashSet<>();
+	/**
+	 * Any click type that should be discarded
+	 */
+	private final Set<ClickType> disabledClickTypes = new HashSet<>();
 	
 	@Getter
 	@Setter
@@ -122,21 +120,18 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	@Getter
 	protected T profile;
-	
-	public static final int MAX_ROWS = 9;
-	public static final int MAX_COLUMNS = 6;
-	
 	/**
-	 * Whether or not items in open slots are returned to the player when this inventory is destroyed, should be set to true for this to properly return the items otherwise it will only return items when the inventory is manually closed using {@link #destroy()}
+	 * Whether or not items in open slots are returned to the player when this inventory is destroyed
 	 */
 	@Getter
 	@Setter
-	private boolean returnItems = true;
+	private boolean returnItemsInOpenSlots = true;
 	
 	/**
 	 * Whether or not the GUI has been destroyed (this menu should not be used anymore if it was marked as destroyed)
 	 */
 	@Getter
+	@Internal
 	private boolean isDestroyed = false;
 	
 	/**
@@ -148,7 +143,8 @@ public abstract class GuiInventory<T extends MenuProfile>{
 		this.plugin = plugin;
 		this.profile = profile;
 		this.inventory = inventory;
-		cleaner.register(this, new CleanupTask(this));
+		this.openSlots = new boolean[inventory.getSize()];
+		this.buttons = new Button[inventory.getSize()];
 		registerDefaultClicks();
 	}
 	
@@ -203,7 +199,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	}
 	
 	/**
-	 * This is called when the GUI is opened, add all the components to the GUI here
+	 * This is called when the GUI is opened, add all the components to the GUI here that should be displayed initially
 	 */
 	public abstract void addComponents();
 	
@@ -213,10 +209,10 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param button The button to be added
 	 * @param slot The slot to add the button to
 	 */
-	public void addButton(Button button, int slot) {
+	public void add(Button button, int slot) {
 		button.setSlot(slot);
 		inventory.setItem(slot, button.getItem());
-		buttons.put(slot, button);
+		buttons[slot] = button;
 	}
 	
 	/**
@@ -225,9 +221,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param item The item to set
 	 * @param slot The slot to set the item in
 	 */
-	public void addItem(ItemStack item, int slot) {
+	public void add(ItemStack item, int slot) {
 		inventory.setItem(slot, item);
-		buttons.remove(slot);
+		buttons[slot] = null;
 	}
 	
 	/**
@@ -236,8 +232,8 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param slot The slot to set the item in
 	 * @param item The item to sets
 	 */
-	public void addItem(int slot, ItemStack item) {
-		addItem(item, slot);
+	public void add(int slot, ItemStack item) {
+		add(item, slot);
 	}
 	
 	/**
@@ -246,8 +242,8 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param button The button to be added
 	 * @param slot The slot to add the button to
 	 */
-	public void addButton(int slot, Button button) {
-		addButton(button, slot);
+	public void add(int slot, Button button) {
+		add(button, slot);
 	}
 	
 	/**
@@ -257,9 +253,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param x The X position to add the button at
 	 * @param y The Y position to add the button at
 	 */
-	public void addButton(Button button, int x, int y) {
-		int slot = x + (y * MAX_ROWS);
-		addButton(button, slot);
+	public void add(Button button, int x, int y) {
+		int slot = x + (y * getMaxRows());
+		add(button, slot);
 	}
 	
 	/**
@@ -302,7 +298,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void fill(int start, int end, Button button) {
 		for(int i = start; i <= end; i++){
-			addButton(button, i);
+			add(button, i);
 		}
 	}
 	
@@ -335,7 +331,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	public void fill(int x1, int y1, int x2, int y2, Button button) {
 		for(int x = x1; x <= x2; x++){
 			for(int y = y1; y <= y2; y++){
-				addButton(button, x, y);
+				add(button, x, y);
 			}
 		}
 	}
@@ -345,9 +341,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 *
 	 * @param button The button to be removed
 	 */
-	public void removeButton(Button button) {
-		inventory.setItem(button.getSlot(), new ItemStack(Material.AIR));
-		buttons.remove(button.getSlot());
+	public void remove(Button button) {
+		inventory.setItem(button.getSlot(), null);
+		buttons[button.getSlot()] = button;
 	}
 	
 	/**
@@ -355,16 +351,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 *
 	 * @param slot Slot to be removed
 	 */
-	public void removeButton(int slot) {
-		inventory.setItem(slot, new ItemStack(Material.AIR));
-		buttons.remove(slot);
-	}
-	
-	/**
-	 * @return All the ItemButtons in this GUI
-	 */
-	public List<Button> getButtons() {
-		return new ArrayList<>(buttons.values());
+	public void remove(int slot) {
+		inventory.setItem(slot, null);
+		buttons[slot] = null;
 	}
 	
 	/**
@@ -374,7 +363,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @return The ItemButton, or null if there is no button in that slot
 	 */
 	public Button getButton(int slot) {
-		return buttons.get(slot);
+		return buttons[slot];
 	}
 	
 	/**
@@ -383,42 +372,28 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param slot The slot to clear
 	 */
 	public void clearSlot(int slot) {
-		Button button = buttons.get(slot);
-		if(button != null){
-			removeButton(button);
-			return;
-		}
-		inventory.setItem(slot, new ItemStack(Material.AIR));
+		buttons[slot] = null;
+		inventory.setItem(slot, null);
 	}
 	
 	/**
-	 * Refresh the inventory.
-	 */
-	public void update() {
-		for(Button button : buttons.values()){
-			if(button == null){
-				continue;
-			}
-			inventory.setItem(button.getSlot(), button.getItem());
-		}
-	}
-	
-	/**
-	 * Opens all slots so that items can be placed in them (by default all open slots will be returned to the player when the inventory is closed, can be toggled using {@link #setReturnItems(boolean)})
+	 * Opens all slots so that items can be placed in them (by default all open slots will be returned to the player when the inventory is closed, can be toggled using {@link #setReturnItemsInOpenSlots(boolean)})
 	 */
 	public void openAllSlots() {
 		for(int i = 0; i < inventory.getSize(); i++){
-			openSlots.add(i);
+			openSlots[i] = true;
 		}
+		hasOpenSlots = true;
 	}
 	
 	/**
-	 * Opens a slot so that items can be placed in it (by default all open slots will be returned to the player when the inventory is closed, can be toggled using {@link #setReturnItems(boolean)})
+	 * Opens a slot so that items can be placed in it (by default all open slots will be returned to the player when the inventory is closed, can be toggled using {@link #setReturnItemsInOpenSlots(boolean)})
 	 *
 	 * @param slot The slot to open
 	 */
 	public void openSlot(int slot) {
-		openSlots.add(slot);
+		openSlots[slot] = true;
+		hasOpenSlots = true;
 	}
 	
 	/**
@@ -429,8 +404,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void openSlots(int start, int end) {
 		for(int i = start; i <= end; i++){
-			openSlots.add(i);
+			openSlots[i] = true;
 		}
+		hasOpenSlots = true;
 	}
 	
 	/**
@@ -444,9 +420,10 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	public void openSlots(int x1, int y1, int x2, int y2) {
 		for(int y = y1; y <= y2; y++){
 			for(int x = x1; x <= x2; x++){
-				openSlots.add(y * MAX_ROWS + x);
+				openSlots[y * getMaxRows() + x] = true;
 			}
 		}
+		hasOpenSlots = true;
 	}
 	
 	/**
@@ -455,7 +432,8 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param slot The slot to open
 	 */
 	public void closeSlot(int slot) {
-		openSlots.remove(slot);
+		openSlots[slot] = false;
+		checkForOpenSlots();
 	}
 	
 	/**
@@ -466,8 +444,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void closeSlots(int start, int end) {
 		for(int i = start; i <= end; i++){
-			openSlots.remove(i);
+			openSlots[i] = false;
 		}
+		checkForOpenSlots();
 	}
 	
 	/**
@@ -481,7 +460,18 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	public void closeSlots(int x1, int y1, int x2, int y2) {
 		for(int y = y1; y <= y2; y++){
 			for(int x = x1; x <= x2; x++){
-				openSlots.remove(y * MAX_ROWS + x);
+				openSlots[y * getMaxRows() + x] = false;
+			}
+		}
+		checkForOpenSlots();
+	}
+	
+	private void checkForOpenSlots() {
+		hasOpenSlots = false;
+		for(int i = 0; i < inventory.getSize(); i++){
+			if(openSlots[i]){
+				hasOpenSlots = true;
+				return;
 			}
 		}
 	}
@@ -495,7 +485,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 			GuiManager instance = GuiManager.getInstance(plugin);
 			instance.addMenu(getPlayer().getUniqueId(), this);
 		} catch(Exception e){
-			throw new IllegalStateException("Unable to open menu gui manager is not initialized!", e);
+			throw new IllegalStateException("Unable to open menu gui!", e);
 		}
 		addComponents();
 		profile.getOwner().openInventory(inventory);
@@ -535,8 +525,8 @@ public abstract class GuiInventory<T extends MenuProfile>{
 			onDestroy.run();
 		}
 		
-		if(returnItems && lastViewer != null){
-			for(int slot : openSlots){
+		if(returnItemsInOpenSlots){
+			for(int slot = 0; slot < inventory.getSize(); slot++){
 				ItemStack item = inventory.getItem(slot);
 				if(item != null){
 					lastViewer.getInventory().addItem(item).values().forEach(remainingItem -> lastViewer.getWorld()
@@ -545,9 +535,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 				}
 			}
 		}
-		
-		inventory.clear();
-		buttons.clear();
+		clear();
 		if(removeFromManager){
 			GuiManager.getInstance(plugin).cleanup(getPlayer().getUniqueId());
 		}
@@ -574,7 +562,9 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void clear() {
 		inventory.clear();
-		buttons.clear();
+		for(int i = 0; i < inventory.getSize(); i++){
+			buttons[i] = null;
+		}
 	}
 	
 	public void onDrag(InventoryDragEvent e, List<Integer> slots) {
@@ -585,9 +575,11 @@ public abstract class GuiInventory<T extends MenuProfile>{
 		if(slots.isEmpty()){
 			return;
 		}
-		if(!openSlots.containsAll(slots)){
-			e.setCancelled(true);
-			return;
+		for(int slot : slots){
+			if(!openSlots[slot]){
+				e.setCancelled(true);
+				return;
+			}
 		}
 		onDragOpenSlot.accept(e);
 	}
@@ -629,7 +621,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 			e.setCancelled(true);
 			return;
 		}
-		if(disabledClickEvents.contains(e.getClick())){
+		if(disabledClickTypes.contains(e.getClick())){
 			e.setCancelled(true);
 			return;
 		}
@@ -638,7 +630,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 			onClick.accept(e);
 		}
 		
-		//if its a pagination button let the pagination gui handle it
+		//if it's a pagination button let the pagination gui handle it
 		PaginationGui paginationGui = getHandlingPaginationGui(e);
 		if(paginationGui != null){
 			
@@ -648,7 +640,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 			}
 			
 			//the button that was clicked (this works as the pagination gui registers the buttons in this menu so it can get the button from the slot directly)
-			Button potentialButton = buttons.get(e.getRawSlot());
+			Button potentialButton = buttons[e.getRawSlot()];
 			Object object = potentialButton != null ? potentialButton : getInventory().getItem(e.getRawSlot());
 			
 			int position = -1;
@@ -688,80 +680,94 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	//---------------Default Click Handlers----------------
 	
 	public void registerDefaultClicks() {
-		clickHandlers.add(onDefaultInventoryClick);
-		clickHandlers.add(onDefaultShiftClick);
+		clickHandlers.add(createDefaultInventoryClickAction());
+		clickHandlers.add(createDefaultInventoryShiftClickAction());
 		updateClickHandlers();
 	}
 	
 	/**
-	 * Handles all clicks in the GUI's inventory lowest prio as its just the average
+	 * Default way to handle inventory click actions
 	 */
-	private final ClickActionData onDefaultInventoryClick = new ClickActionData(0,
-			(e, gui) -> gui.getInventory().equals(e.getClickedInventory()),
-			(e, gui) -> {
-				if(openSlots.contains(e.getSlot())){
-					List<Integer> list = new ArrayList<>();
-					list.add(e.getSlot());
-					onClickOpenSlot.accept(e, list);
-					return true;
-				}
-				e.setCancelled(true);
-				Button button = buttons.get(e.getSlot());
-				if(button != null){
-					button.onClick(e);
-				}
+	private ClickActionData createDefaultInventoryClickAction() {
+		return new ClickActionData(0, (e, gui) -> gui.getInventory().equals(e.getClickedInventory()), (e, gui) -> {
+			if(this.openSlots[e.getSlot()]){
+				List<Integer> list = new ArrayList<>();
+				list.add(e.getSlot());
+				onClickOpenSlot.accept(e, list);
 				return true;
-			});
+			}
+			e.setCancelled(true);
+			Button button = buttons[e.getSlot()];
+			if(button != null){
+				button.onClick(e);
+			}
+			return true;
+		});
+	}
 	
-	/**
-	 * Handles all shift clicks in the GUI's inventory
-	 */
-	private final ClickActionData onDefaultShiftClick = new ClickActionData(1,
-			(e, gui) -> !gui.getInventory().equals(e.getClickedInventory()) && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY,
-			(e, gui) -> {
-				if(!openSlots.isEmpty()){
-					Map<Integer, ItemStack> slots = new HashMap<>();
-					int amount = Objects.requireNonNull(e.getCurrentItem()).getAmount();
-					for(int slot : openSlots){ //NOSONAR
-						if(amount <= 0){
-							break;
+	private ClickActionData createDefaultInventoryShiftClickAction() {
+		return new ClickActionData(1,
+				(e, gui) -> !gui.getInventory().equals(e.getClickedInventory()) && e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY,
+				(e, gui) -> {
+					if(hasOpenSlots){
+						Map<Integer, ItemStack> slots = new HashMap<>();
+						
+						//the amount that needs to be distributed
+						int amount = Objects.requireNonNull(e.getCurrentItem()).getAmount();
+						
+						for(int slot = 0; slot < openSlots.length; slot++){
+							if(amount <= 0){
+								break;
+							}
+							if(!openSlots[slot]){
+								continue;
+							}
+							
+							ItemStack item = getInventory().getItem(slot);
+							ItemStack currentItem = e.getCurrentItem();
+							
+							if(item == null){
+								//don't set it directly in case onClickOpenSlot cancels or modifies the event
+								ItemStack clone = currentItem.clone();
+								clone.setAmount(amount);
+								slots.put(slot, clone);
+								amount = 0;
+								continue;
+							}
+							
+							if(e.getCurrentItem().isSimilar(item)){
+								int max = item.getType().getMaxStackSize() - item.getAmount();
+								
+								int diff = Math.min(max, amount);
+								
+								amount -= diff;
+								
+								ItemStack clone = item.clone();
+								clone.setAmount(clone.getAmount() + diff);
+								
+								slots.put(slot, clone);
+							}
 						}
-						ItemStack item = getInventory().getItem(slot);
-						if(item == null){
-							int diff = Math.min(amount, e.getCurrentItem().getType().getMaxStackSize());
-							amount -= diff;
-							ItemStack clone = e.getCurrentItem().clone();
-							clone.setAmount(diff);
-							slots.put(slot, clone);
-							continue;
+						
+						if(slots.isEmpty()){
+							return true;
 						}
-						if(e.getCurrentItem().isSimilar(item)){
-							int max = item.getType().getMaxStackSize() - item.getAmount();
-							int diff = Math.min(max, e.getCurrentItem().getAmount());
-							amount -= diff;
-							ItemStack clone = item.clone();
-							clone.setAmount(clone.getAmount() + diff);
-							slots.put(slot, clone);
+						onClickOpenSlot.accept(e, new ArrayList<>(slots.keySet()));
+						if(e.isCancelled()){
+							return true;
 						}
-					}
-					if(slots.isEmpty()){
-						return true;
-					}
-					onClickOpenSlot.accept(e, new ArrayList<>(slots.keySet()));
-					if(e.isCancelled()){
+						e.setCancelled(true);
+						ItemStack item = e.getCurrentItem();
+						//sets the item to whatever the remainder is that couldn't be distributed
+						item.setAmount(Math.max(0, amount));
+						e.setCurrentItem(item);
+						slots.forEach(getInventory()::setItem);
 						return true;
 					}
 					e.setCancelled(true);
-					ItemStack item = e.getCurrentItem();
-					item.setAmount(amount);
-					e.setCurrentItem(item);
-					slots.forEach(getInventory()::setItem);
-					Bukkit.getScheduler().scheduleSyncDelayedTask(gui.getPlugin(), this::update);
 					return true;
-				}
-				e.setCancelled(true);
-				return true;
-			});
+				});
+	}
 	
 	/**
 	 * Registers a click handler for a specific action
@@ -779,7 +785,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	}
 	
 	private void updateClickHandlers() {
-		clickHandlers.sort(Comparator.comparingInt(ClickActionData::weight));
+		clickHandlers.sort(Comparator.comparingInt(ClickActionData::weight).reversed());
 	}
 	
 	/**
@@ -788,7 +794,7 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 * @param clickType the type of click to disable (for example double clicks to prevent a third click from happening as spigot fires 2 single clicks and a double click event for a double click)
 	 */
 	public void disableClickEvent(ClickType... clickType) {
-		disabledClickEvents.addAll(Arrays.asList(clickType));
+		disabledClickTypes.addAll(Arrays.asList(clickType));
 	}
 	
 	/**
@@ -798,19 +804,22 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	 */
 	public void enableClickEvent(ClickType... clickType) {
 		for(ClickType type : clickType){
-			disabledClickEvents.remove(type);
+			disabledClickTypes.remove(type);
 		}
 	}
 	
-	public void clearPaginationGui(PaginationGui paginationGui) {
+	/**
+	 * Removes all pagination uis assigned to this inventory
+	 */
+	public void removePaginationGui(PaginationGui paginationGui) {
 		paginationGuis.remove(paginationGui);
 		paginationGui.clear();
 	}
 	
 	/**
-	 * Clears all pagination GUIs assigned to this GUI
+	 * Removes all pagination GUIs assigned to this GUI
 	 */
-	public void clearPaginationGuis() {
+	public void removePaginationGuis() {
 		for(PaginationGui paginationGui : paginationGuis){
 			paginationGui.clear();
 		}
@@ -819,5 +828,12 @@ public abstract class GuiInventory<T extends MenuProfile>{
 	
 	public Player getPlayer() {return profile.getOwner();}
 	
+	public int getMaxRows() {
+		return 9;
+	}
+	
+	public int getMaxColumns() {
+		return 6;
+	}
 }
 	

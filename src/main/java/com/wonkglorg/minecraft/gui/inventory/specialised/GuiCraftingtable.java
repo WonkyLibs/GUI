@@ -100,7 +100,7 @@ public abstract class GuiCraftingtable<T extends MenuProfile> extends GuiInvento
      * @param button the button to add
      */
     public void addOutputButton(Button button) {
-        addButton(button, getOutputSlot());
+        add(button, getOutputSlot());
     }
 
 
@@ -122,7 +122,7 @@ public abstract class GuiCraftingtable<T extends MenuProfile> extends GuiInvento
      */
     public void addMatrixButton(Button[] matrix) {
         for (int i = 1; i < 10; i++) {
-            addButton(matrix[i - 1], i);
+            add(matrix[i - 1], i);
         }
     }
 }

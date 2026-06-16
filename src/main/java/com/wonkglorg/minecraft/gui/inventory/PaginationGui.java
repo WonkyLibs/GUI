@@ -1,6 +1,5 @@
 package com.wonkglorg.minecraft.gui.inventory;
 
-import static com.wonkglorg.minecraft.gui.inventory.GuiInventory.MAX_ROWS;
 import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -9,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Consumer;
@@ -37,6 +37,9 @@ public final class PaginationGui{
 	 */
 	private final ArrayList<PaginationEntry> entries = new ArrayList<>();
 	
+	/**
+	 * Slots this pagination can use for display
+	 */
 	@Getter
 	private final Set<Integer> slots = new TreeSet<>();
 	
@@ -45,10 +48,6 @@ public final class PaginationGui{
 	};
 	/**
 	 * The item to use to fill the rest with the empty slots
-	 * -- SETTER --
-	 * Sets the filler item
-	 * -- GETTER --
-	 * Gets the filler item
 	 */
 	@Setter
 	private ItemStack fillerItem;
@@ -56,11 +55,11 @@ public final class PaginationGui{
 	/**
 	 * The previous button assigned to this panel (is not required only for convenience in #updatePageButtons)
 	 */
-	private Button previousButton;
+	private NavigationEntry previousPageControl;
 	/**
 	 * The Next button assigned to this panel (is not required only for convenience in #updatePageButtons)
 	 */
-	private Button nextButton;
+	private NavigationEntry nextPageControl;
 	
 	/**
 	 * Called whenever a click event happens for this pagination menu, this happens before any buttons fire their click events
@@ -95,7 +94,7 @@ public final class PaginationGui{
 	 *
 	 * @param button The button to add
 	 */
-	public void addPagedButton(Button button) {
+	public void add(Button button) {
 		entries.add(new PaginationEntry(button));
 	}
 	
@@ -104,30 +103,8 @@ public final class PaginationGui{
 	 *
 	 * @param item The item to add
 	 */
-	public void addPagedItem(ItemStack item) {
+	public void add(ItemStack item) {
 		entries.add(new PaginationEntry(item));
-	}
-	
-	/**
-	 * Adds multiple buttons to the paged panel
-	 *
-	 * @param buttons The buttons to add
-	 */
-	public void addPagedButtons(Iterable<Button> buttons) {
-		for(Button button : buttons){
-			addPagedButton(button);
-		}
-	}
-	
-	/**
-	 * Adds multiple items to the paged panel
-	 *
-	 * @param items The items to add
-	 */
-	public void addPagedItems(Iterable<ItemStack> items) {
-		for(ItemStack item : items){
-			addPagedItem(item);
-		}
 	}
 	
 	/**
@@ -135,9 +112,8 @@ public final class PaginationGui{
 	 *
 	 * @param item The item to remove
 	 */
-	public void removePagedItem(ItemStack item) {
+	public void remove(ItemStack item) {
 		entries.removeIf(e -> e.object.equals(item));
-		updatePage();
 	}
 	
 	/**
@@ -145,33 +121,8 @@ public final class PaginationGui{
 	 *
 	 * @param button The button to remove
 	 */
-	public void removePagedButton(Button button) {
+	public void remove(Button button) {
 		entries.removeIf(e -> e.object.equals(button));
-		updatePage();
-	}
-	
-	/**
-	 * Removes multiple items from the paged panel
-	 *
-	 * @param items The items to remove
-	 */
-	public void removePagedItems(Iterable<ItemStack> items) {
-		for(ItemStack item : items){
-			entries.removeIf(e -> e.object.equals(item));
-		}
-		updatePage();
-	}
-	
-	/**
-	 * Removes multiple buttons from the paged panel
-	 *
-	 * @param buttons The buttons to remove
-	 */
-	public void removePagedButtons(Iterable<Button> buttons) {
-		for(Button button : buttons){
-			entries.removeIf(e -> e.object.equals(button));
-		}
-		updatePage();
 	}
 	
 	/**
@@ -179,9 +130,8 @@ public final class PaginationGui{
 	 *
 	 * @param index The index of the item to remove
 	 */
-	public void removeByIndex(int index) {
+	public void remove(int index) {
 		entries.remove(index);
-		updatePage();
 	}
 	
 	/**
@@ -190,7 +140,7 @@ public final class PaginationGui{
 	 * @param index The index to add the item at
 	 * @param item The item to add
 	 */
-	public void addAtPosition(int index, ItemStack item) {
+	public void add(int index, ItemStack item) {
 		ensureCapacity(index);
 		entries.set(index, new PaginationEntry(item));
 	}
@@ -201,7 +151,7 @@ public final class PaginationGui{
 	 * @param index The index to add the button at
 	 * @param button The button to add
 	 */
-	public void addAtPosition(int index, Button button) {
+	public void add(int index, Button button) {
 		ensureCapacity(index);
 		entries.set(index, new PaginationEntry(button));
 	}
@@ -232,7 +182,6 @@ public final class PaginationGui{
 	 */
 	public void addSlot(int slot) {
 		slots.add(slot);
-		updatePage();
 	}
 	
 	/**
@@ -245,7 +194,6 @@ public final class PaginationGui{
 		for(int i = start; i <= end; i++){
 			slots.add(i);
 		}
-		updatePage();
 	}
 	
 	/**
@@ -259,10 +207,9 @@ public final class PaginationGui{
 	public void addSlots(int x1, int y1, int x2, int y2) {
 		for(int x = x1; x <= x2; x++){
 			for(int y = y1; y <= y2; y++){
-				slots.add((y * MAX_ROWS) + x);
+				slots.add((y * gui.getMaxRows()) + x);
 			}
 		}
-		updatePage();
 	}
 	
 	/**
@@ -271,10 +218,7 @@ public final class PaginationGui{
 	 * @param slot The slot to remove
 	 */
 	public void removeSlot(int slot) {
-		slots.forEach(gui::clearSlot);
-		slots.forEach(gui::clearSlot);
 		slots.remove(slot);
-		updatePage();
 	}
 	
 	/**
@@ -284,11 +228,9 @@ public final class PaginationGui{
 	 * @param end The end index of slots to remove, inclusive (0-indexed)
 	 */
 	public void removeSlots(int start, int end) {
-		slots.forEach(gui::clearSlot);
 		for(int i = start; i <= end; i++){
 			slots.remove(i);
 		}
-		updatePage();
 	}
 	
 	/**
@@ -300,44 +242,45 @@ public final class PaginationGui{
 	 * @param y2 The ending Y of slots to remove, inclusive (0-indexed)
 	 */
 	public void removeSlots(int x1, int y1, int x2, int y2) {
-		slots.forEach(gui::clearSlot);
 		for(int x = x1; x <= x2; x++){
 			for(int y = y1; y <= y2; y++){
-				slots.remove((y * MAX_ROWS) + x);
+				slots.remove((y * gui.getMaxRows()) + x);
 			}
 		}
-		updatePage();
 	}
 	
 	/**
 	 * Updates the elements displayed on the current page
 	 */
 	public void updatePage() {
-		slots.forEach(gui::clearSlot);
-		slots.forEach(i -> gui.getInventory().setItem(i, fillerItem));
 		if(getPageSize() == 0 || entries.isEmpty()){
+			slots.forEach(i -> gui.getInventory().setItem(i, fillerItem));
 			onUpdate.run();
 			return;
 		}
 		int start = (page - 1) * getPageSize();
 		int end = Math.min(entries.size(), page * getPageSize());
-		Iterator<Integer> iter = slots.iterator();
-		for(int i = start; i < end; i++){ //NOSONAR
-			PaginationEntry paginationEntry = entries.get(i);
-			int slot = iter.next();
-			if(paginationEntry == null){
-				gui.addItem(fillerItem, slot);
-				continue;
-			}
-			if(paginationEntry.object() == null){
-				gui.addItem(null, slot);
+		Iterator<Integer> slotIter = slots.iterator();
+		
+		for(int entryIndex = start; slotIter.hasNext(); entryIndex++){
+			int slot = slotIter.next();
+			
+			if(entryIndex >= end){
+				gui.add(fillerItem, slot);
 				continue;
 			}
 			
-			if(paginationEntry.isButton()){
-				gui.addButton((Button) paginationEntry.object(), slot);
+			PaginationEntry entry = entries.get(entryIndex);
+			
+			if(entry == null || entry.object() == null){
+				gui.add(fillerItem, slot);
+				continue;
+			}
+			
+			if(entry.isButton()){
+				gui.add((Button) entry.object(), slot);
 			} else {
-				gui.addItem(paginationEntry.getItemStack(), slot);
+				gui.add(entry.getItemStack(), slot);
 			}
 		}
 		onUpdate.run();
@@ -396,13 +339,10 @@ public final class PaginationGui{
 	 * @return the position in the entries list of the item or -1 if not found
 	 */
 	public int getPosition(ItemStack item) {
-		for(PaginationEntry entry : entries){
-			if(entry == null){
-				continue;
-			}
-			
-			if(entry.object().equals(item)){
-				return entries.indexOf(entry);
+		for(int i = 0; i < entries.size(); i++){
+			PaginationEntry entry = entries.get(i);
+			if(entry != null && Objects.equals(entry.object(), item)){
+				return i;
 			}
 		}
 		return -1;
@@ -413,12 +353,10 @@ public final class PaginationGui{
 	 * @return the position in the entries list of the button or -1 if not found
 	 */
 	public int getPosition(Button button) {
-		for(PaginationEntry entry : entries){
-			if(entry == null){
-				continue;
-			}
-			if(entry.object().equals(button)){
-				return entries.indexOf(entry);
+		for(int i = 0; i < entries.size(); i++){
+			PaginationEntry entry = entries.get(i);
+			if(entry != null && Objects.equals(entry.object(), button)){
+				return i;
 			}
 		}
 		return -1;
@@ -441,104 +379,6 @@ public final class PaginationGui{
 	}
 	
 	/**
-	 * Sets the previous button for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param button the button
-	 * @param slot the slot of the button
-	 */
-	public void setPreviousPageButton(Button button, int slot) {
-		button.setSlot(slot);
-		this.previousButton = button;
-	}
-	
-	/**
-	 * Sets the previous button for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param item the previous page icon
-	 * @param slot the slot of the button
-	 */
-	public void setPreviousPageButton(ItemStack item, int slot) {
-		setPreviousPageButton(Button.create(item, e -> prevPage()), slot);
-	}
-	
-	/**
-	 * Sets the next button for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param button the button
-	 * @param slot the slot of the button
-	 */
-	public void setNextPageButton(Button button, int slot) {
-		button.setSlot(slot);
-		this.nextButton = button;
-	}
-	
-	/**
-	 * Sets the next button for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param item the next page icon
-	 * @param slot the slot of the button
-	 */
-	public void setNextPageButton(ItemStack item, int slot) {
-		setNextPageButton(Button.create(item, e -> nextPage()), slot);
-	}
-	
-	/**
-	 * Sets the previous and next buttons for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param previousButton the previous button
-	 * @param previousSlot the slot of the previous button
-	 * @param nextButton the next button
-	 * @param nextSlot the slot of the next button
-	 */
-	public void setPageSwapButtons(Button previousButton, int previousSlot, Button nextButton, int nextSlot) {
-		setPreviousPageButton(previousButton, previousSlot);
-		setNextPageButton(nextButton, nextSlot);
-	}
-	
-	/**
-	 * Sets the previous and next buttons for page navigation used by {@link #updatePageChangeButtons()}
-	 *
-	 * @param previousButton the previous page icon
-	 * @param previousSlot the slot of the previous button
-	 * @param nextButton the next page icon
-	 * @param nextSlot the slot of the next button
-	 */
-	public void setPageSwapButtons(ItemStack previousButton, int previousSlot, ItemStack nextButton, int nextSlot) {
-		setPreviousPageButton(previousButton, previousSlot);
-		setNextPageButton(nextButton, nextSlot);
-	}
-	
-	/**
-	 * updates the page buttons based on the current page count with an itemstack
-	 *
-	 * @param fillerItem the item to use as a filler
-	 */
-	public void updatePageChangeButtons(ItemStack fillerItem) {
-		if(previousButton == null || nextButton == null){
-			return;
-		}
-		
-		if(getMaxPage() == 1){
-			gui.addItem(fillerItem, previousButton.getSlot());
-			gui.addItem(fillerItem, nextButton.getSlot());
-			return;
-		}
-		
-		if(getPage() > 1){
-			gui.addButton(previousButton, previousButton.getSlot());
-		} else {
-			gui.addItem(fillerItem, previousButton.getSlot());
-		}
-		
-		if(getPage() < getMaxPage()){
-			gui.addButton(nextButton, nextButton.getSlot());
-		} else {
-			gui.addItem(fillerItem, nextButton.getSlot());
-		}
-		gui.update();
-	}
-	
-	/**
 	 * FOR INTERNAL USE ONLY
 	 *
 	 * @param event the event
@@ -557,41 +397,41 @@ public final class PaginationGui{
 	}
 	
 	/**
-	 * updates the page buttons based on the current page count with the default filler item
+	 * Sets page controls (the button should call {@link #prevPage()} and {@link #nextPage()}
 	 */
-	public void updatePageChangeButtons() {
-		updatePageChangeButtons(fillerItem);
+	public void setPageControlButtons(NavigationEntry previousPageControl, NavigationEntry nextPageControl) {
+		this.previousPageControl = previousPageControl;
+		this.nextPageControl = nextPageControl;
 	}
 	
 	/**
-	 * updates the page buttons based on the current page count, set 2 buttons for previous and next to replace them if not needed
-	 *
-	 * @param previousButtonReplacer the button to replace the previous button with if not needed
-	 * @param nextButtonReplacer the button to replace the next button with if not needed
+	 * Updates the page buttons based on the current page count, set 2 buttons for previous and next to replace them if not needed
 	 */
-	public void updatePageChangeButtons(Button previousButtonReplacer, Button nextButtonReplacer) {
-		if(previousButton == null || nextButton == null){
+	public void updatePageChangeButtons() {
+		if(previousPageControl == null || nextPageControl == null){
 			return;
 		}
 		
 		if(getMaxPage() == 1){
-			gui.addButton(previousButtonReplacer, previousButton.getSlot());
-			gui.addButton(nextButtonReplacer, nextButton.getSlot());
+			previousPageControl.setReplacement(gui);
+			nextPageControl.setReplacement(gui);
 			return;
 		}
 		
-		if(getPage() > 1){
-			gui.addButton(previousButton, previousButton.getSlot());
-		} else {
-			gui.addButton(previousButtonReplacer, previousButton.getSlot());
+		if(getPage() == getMaxPage()){
+			gui.add(previousPageControl.slot, previousPageControl.button);
+			nextPageControl.setReplacement(gui);
+			return;
 		}
 		
-		if(getPage() < getMaxPage()){
-			gui.addButton(nextButton, nextButton.getSlot());
-		} else {
-			gui.addButton(nextButtonReplacer, nextButton.getSlot());
+		if(getPage() == 1){
+			previousPageControl.setReplacement(gui);
+			gui.add(nextPageControl.slot, nextPageControl.button);
+			return;
 		}
-		gui.update();
+		
+		gui.add(previousPageControl.slot, previousPageControl.button);
+		gui.add(nextPageControl.slot, nextPageControl.button);
 	}
 	
 	/**
@@ -619,6 +459,39 @@ public final class PaginationGui{
 		}
 	}
 	
+	public static final class NavigationEntry{
+		private final int slot;
+		private final Button button;
+		private final Object object;
+		
+		public NavigationEntry(int slot, Button button, ItemStack replacement) {
+			this.slot = slot;
+			this.button = button;
+			this.object = replacement;
+		}
+		
+		public NavigationEntry(int slot, Button button, Button replacement) {
+			this.slot = slot;
+			this.button = button;
+			this.object = replacement;
+		}
+		
+		public void setReplacement(GuiInventory<?> inventory) {
+			if(object == null){
+				inventory.remove(slot);
+				return;
+			}
+			
+			if(object instanceof Button replaceButton){
+				inventory.add(slot, replaceButton);
+				return;
+			}
+			
+			inventory.add(slot, (ItemStack) object);
+		}
+		
+	}
+	
 	/**
 	 * Represents the data of a click event
 	 *
@@ -636,10 +509,7 @@ public final class PaginationGui{
 			return object instanceof ItemStack;
 		}
 	}
-	
-	public int getButtonSize() {
-		return getButtons().size();
-	}
+
 	
 	public int getSlotSize() {
 		return slots.size();
