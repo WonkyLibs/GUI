@@ -1,5 +1,6 @@
 package com.wonkglorg.minecraft.gui.inventory;
 
+import lombok.Getter;
 import net.kyori.adventure.text.Component;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
@@ -9,12 +10,21 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
+ * An inventory item with functionality when clicked
+ *
  * @author Wonkglorg
  */
 @SuppressWarnings("unused")
 public abstract class Button{
 	
-	protected ItemStack item;
+	/**
+	 * The visual display of the button
+	 */
+	@Getter
+	protected final ItemStack item;
+	/**
+	 * What slot it is in
+	 */
 	private int slot;
 	
 	/**
@@ -128,31 +138,12 @@ public abstract class Button{
 		}
 	}
 	
-	/**
-	 * Get the ItemStack representing the icon for this button
-	 *
-	 * @return The ItemStack
-	 */
-	public ItemStack getItem() {
-		return item;
-	}
-	
 	protected int getSlot() {
 		return slot;
 	}
 	
 	protected void setSlot(int slot) {
 		this.slot = slot;
-	}
-	
-	/**
-	 * Update the item of this button. Does not refresh the InventoryGUI; you must call {@link GuiInventory#update()} for this change to be reflected
-	 * in the GUI.
-	 *
-	 * @param item The item to become the icon for this button
-	 */
-	public void setItem(ItemStack item) {
-		this.item = item;
 	}
 	
 	public abstract void onClick(InventoryClickEvent e);

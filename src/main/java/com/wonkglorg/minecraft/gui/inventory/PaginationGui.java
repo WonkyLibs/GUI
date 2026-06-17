@@ -62,6 +62,15 @@ public final class PaginationGui{
 	private NavigationEntry nextPageControl;
 	
 	/**
+	 * Default next page button instance
+	 */
+	public final Button defaultNextPageButton = Button.create(InventoryItems.NEXT_PAGE, e -> this.nextPage());
+	/**
+	 * Default prev page button instance
+	 */
+	public final Button defaultPrevPageButton = Button.create(InventoryItems.PREVIOUS_PAGE, e -> this.prevPage());
+	
+	/**
 	 * Called whenever a click event happens for this pagination menu, this happens before any buttons fire their click events
 	 */
 	@Setter
@@ -509,7 +518,6 @@ public final class PaginationGui{
 			return object instanceof ItemStack;
 		}
 	}
-
 	
 	public int getSlotSize() {
 		return slots.size();
